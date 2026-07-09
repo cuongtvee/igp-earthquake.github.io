@@ -452,12 +452,7 @@ createApp({
 
       return rows.map((a, index) => {
         const event = a.event || {};
-        const imageLinks = (a.images || [])
-          .filter(img => img.type === "epicenter_map" || img.type === "seismic_record" || img.type === "other")
-          .map(img => img.url || img.local_path || "")
-          .filter(Boolean)
-          .join(" | ");
-
+        const imageLinks = this.templateImageLinks(a);
         const dt = this.bestDateTime(a);
 
         return {
@@ -475,6 +470,45 @@ createApp({
           "Nguồn tham khảo": a.article_url || ""
         };
       });
+    },
+
+    templateImageLinks(a) {
+      const priority = {
+        "epicenter_map": 1,
+        "seismic_record": 2,
+        "other": 3
+      };
+
+      const urls = (a.images || [])
+        .slice()
+        .sort((x, y) => (priority[x.type] || 99) - (priority[y.type] || 99))
+        .map(img => img.url || img.local_path || "")
+        .filter(Boolean)
+        .map(url => String(url).trim())
+        // Avoid data:image/base64 URLs because they can exceed Excel's 32,767-char cell limit.
+        .filter(url => /^https?:\/\//i.test(url))
+        // Prefer HTTPS on GitHub Pages to avoid mixed-content blocking.
+        .map(url => url.replace(/^http:\/\/igp-vast\.vn/i, "https://igp-vast.vn"));
+
+      const uniqueUrls = Array.from(new Set(urls));
+
+      // Keep the export useful and safe. The full article link remains in "Nguồn tham khảo".
+      const joined = uniqueUrls.slice(0, 20).join(" | ");
+      return this.safeExcelText(joined);
+    },
+
+    safeExcelText(value) {
+      if (value === null || value === undefined) return "";
+
+      const text = String(value);
+
+      // Excel XLSX cell text limit is 32,767 characters.
+      // Use a smaller safety margin because SheetJS also serializes XML entities.
+      const limit = 32000;
+
+      if (text.length <= limit) return text;
+
+      return text.slice(0, limit - 80) + " ... [TRUNCATED: cell text exceeded Excel limit]";
     },
 
     valueOrBlank(v) {
@@ -570,7 +604,15 @@ createApp({
         "Nguồn tham khảo"
       ];
 
-      const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+      const safeRows = rows.map(row => {
+        const safe = {};
+        for (const key of headers) {
+          safe[key] = this.safeExcelText(row[key]);
+        }
+        return safe;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(safeRows, { header: headers });
 
       worksheet["!cols"] = [
         { wch: 6 },
@@ -589,7 +631,12 @@ createApp({
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "EarthquakeData");
-      XLSX.writeFile(workbook, "igp_earthquake_template_export.xlsx");
+      try {
+        XLSX.writeFile(workbook, "igp_earthquake_template_export.xlsx");
+      } catch (err) {
+        console.error(err);
+        alert("Không export được Excel. Một số ô có thể vẫn quá dài. Hãy thử chọn CSV hoặc kiểm tra trường Link Ảnh.");
+      }
     },
 
     flatRows() {
