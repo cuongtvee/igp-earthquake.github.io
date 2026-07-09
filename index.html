@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IGP/VAST Earthquake Report Viewer</title>
+
+  <!-- VueJS CDN: static page, no build required. -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --chip: #eef2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    [v-cloak] {
+      display: none;
+    }
+
+    .app {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.22);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.92;
+      line-height: 1.55;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .stat-title {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .stat-sub {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 14px 0;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    .btn-ok {
+      background: var(--ok);
+      color: white;
+      border-color: var(--ok);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      background: white;
+      color: var(--text);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .notice {
+      border-left: 4px solid var(--primary);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 10px;
+      line-height: 1.55;
+      color: #1e3a8a;
+      margin-top: 12px;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 68vh;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1180px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      z-index: 2;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    .title-link {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .title-link:hover {
+      text-decoration: underline;
+    }
+
+    .chip {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: var(--chip);
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 4px 2px 0;
+      white-space: nowrap;
+    }
+
+    .chip-ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .chip-warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .chip-muted {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .raw {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #f9fafb;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .image-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .image-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: #f3f4f6;
+      display: block;
+    }
+
+    .image-card-body {
+      padding: 10px;
+    }
+
+    .drawer {
+      margin-top: 14px;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer {
+      margin: 22px 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 1000px) {
+      .grid-4,
+      .grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .image-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 12px;
+      }
+
+      .grid-4,
+      .grid-3,
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 22px;
+      }
+    }
+
+    @media print {
+      .toolbar,
+      .filters,
+      .pagination,
+      .notice,
+      .footer,
+      .btn {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .app {
+        max-width: none;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+
+      .table-wrap {
+        max-height: none;
+        overflow: visible;
+      }
+
+      th {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app" class="app" v-cloak>
+  <section class="hero">
+    <h1>IGP/VAST Earthquake Report Viewer</h1>
+    <p>
+      Webview tĩnh dùng VueJS để xem dữ liệu sau khi crawl.
+      Chọn file <b>data/articles.jsonl</b>, lọc dữ liệu, xem ảnh bản đồ/chấn tâm/băng ghi,
+      sau đó bấm <b>Extract Report</b> để xuất báo cáo.
+    </p>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <label class="btn btn-primary" for="filePicker">📂 Chọn articles.jsonl</label>
+      <input
+        id="filePicker"
+        class="file-input"
+        type="file"
+        accept=".jsonl,.json,.txt,.csv"
+        @change="handleFile"
+      />
+
+      <button class="btn btn-ok" :disabled="!articles.length" @click="downloadReportHtml">
+        📄 Extract Report HTML
+      </button>
+
+      <button class="btn" :disabled="!articles.length" @click="downloadCsv">
+        ⬇️ Export CSV
+      </button>
+
+      <button class="btn" :disabled="!articles.length" @click="downloadJson">
+        ⬇️ Export JSON
+      </button>
+
+      <button class="btn" :disabled="!articles.length" @click="window.print()">
+        🖨️ Print
+      </button>
+
+      <button class="btn btn-danger" :disabled="!articles.length" @click="resetAll">
+        Reset
+      </button>
+    </div>
+
+    <div v-if="!articles.length" class="notice">
+      <b>Cách dùng:</b>
+      đặt file này cùng cấp với thư mục <code>data/</code>, double-click mở bằng browser,
+      chọn <code>data/articles.jsonl</code>. Nếu muốn xem ảnh local, giữ nguyên cấu trúc
+      <code>data/images/&lt;item_id&gt;/...</code>.
+    </div>
+
+    <div v-if="error" class="notice warning">
+      {{ error }}
+    </div>
+
+    <div v-if="articles.length" class="filters">
+      <input v-model="filters.search" placeholder="Tìm tiêu đề, địa điểm, nội dung..." />
+      <select v-model="filters.year">
+        <option value="">Tất cả năm</option>
+        <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+      </select>
+      <select v-model="filters.image">
+        <option value="">Tất cả ảnh</option>
+        <option value="epicenter_map">Có bản đồ chấn tâm</option>
+        <option value="seismic_record">Có băng ghi</option>
+        <option value="any">Có ảnh bất kỳ</option>
+        <option value="none">Không có ảnh</option>
+      </select>
+      <select v-model="filters.risk">
+        <option value="">Tất cả cấp rủi ro</option>
+        <option v-for="risk in risks" :key="risk" :value="risk">Cấp {{ risk }}</option>
+      </select>
+      <select v-model.number="pageSize">
+        <option :value="25">25 dòng/trang</option>
+        <option :value="50">50 dòng/trang</option>
+        <option :value="100">100 dòng/trang</option>
+        <option :value="250">250 dòng/trang</option>
+      </select>
+    </div>
+  </section>
+
+  <section v-if="articles.length" class="grid grid-4" style="margin-top: 14px;">
+    <div class="card">
+      <div class="stat-title">Tổng số bài</div>
+      <div class="stat-value">{{ filteredArticles.length }}</div>
+      <div class="stat-sub">Sau lọc / {{ articles.length }} bài gốc</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-title">Khoảng thời gian</div>
+      <div class="stat-value" style="font-size: 20px;">{{ dateRange }}</div>
+      <div class="stat-sub">Theo published_date hoặc title date</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-title">Magnitude lớn nhất</div>
+      <div class="stat-value">{{ maxMagnitudeText }}</div>
+      <div class="stat-sub">{{ maxMagnitudeArticle?.title || 'Không có dữ liệu' }}</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-title">Ảnh quan trọng</div>
+      <div class="stat-value">{{ imageStats.epicenter_map }} / {{ imageStats.seismic_record }}</div>
+      <div class="stat-sub">Bản đồ chấn tâm / Băng ghi</div>
+    </div>
+  </section>
+
+  <section v-if="articles.length" class="grid grid-3" style="margin-top: 14px;">
+    <div class="card">
+      <h3 style="margin-top:0;">Thống kê theo năm</h3>
+      <div v-for="row in yearStats" :key="row.year" style="margin-bottom: 8px;">
+        <span class="chip">{{ row.year }}</span>
+        <span>{{ row.count }} bài</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Thống kê cấp rủi ro</h3>
+      <div v-if="riskStats.length">
+        <div v-for="row in riskStats" :key="row.risk" style="margin-bottom: 8px;">
+          <span class="chip chip-warn">Cấp {{ row.risk }}</span>
+          <span>{{ row.count }} bài</span>
+        </div>
+      </div>
+      <div v-else class="small">Không có dữ liệu cấp rủi ro.</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Chất lượng metadata</h3>
+      <div><span class="chip chip-ok">Magnitude</span> {{ completeness.magnitude }} bài</div>
+      <div><span class="chip chip-ok">Tọa độ</span> {{ completeness.coord }} bài</div>
+      <div><span class="chip chip-ok">Độ sâu</span> {{ completeness.depth }} bài</div>
+      <div><span class="chip chip-ok">Thời gian GMT</span> {{ completeness.eventTime }} bài</div>
+    </div>
+  </section>
+
+  <section v-if="articles.length" class="card" style="margin-top: 14px;">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <h2 style="margin:0;">Danh sách tin động đất</h2>
+      <div class="small">
+        Click tiêu đề để mở trang gốc. Click “Chi tiết” để xem raw text và ảnh.
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top: 12px;">
+      <table>
+        <thead>
+          <tr>
+            <th @click="setSort('published_date')">Ngày {{ sortMark('published_date') }}</th>
+            <th @click="setSort('title')">Tiêu đề {{ sortMark('title') }}</th>
+            <th @click="setSort('magnitude')">M {{ sortMark('magnitude') }}</th>
+            <th>Tọa độ</th>
+            <th @click="setSort('depth_km')">Độ sâu {{ sortMark('depth_km') }}</th>
+            <th>Địa điểm</th>
+            <th @click="setSort('risk_level')">Rủi ro {{ sortMark('risk_level') }}</th>
+            <th>Ảnh</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="a in pagedArticles" :key="a.item_id || a.article_url">
+            <td>
+              <b>{{ a.published_date || '-' }}</b>
+              <div class="small">{{ a.event?.event_time_hanoi || a.event?.event_time_gmt || '' }}</div>
+            </td>
+            <td style="max-width: 340px;">
+              <a class="title-link" :href="a.article_url" target="_blank" rel="noopener">
+                {{ a.title || '(Không có tiêu đề)' }}
+              </a>
+              <div class="small">ID: {{ a.item_id || '-' }}</div>
+            </td>
+            <td><span class="chip">{{ formatNumber(a.event?.magnitude) }}</span></td>
+            <td>
+              <div>{{ formatNumber(a.event?.latitude) }}, {{ formatNumber(a.event?.longitude) }}</div>
+              <a
+                v-if="a.event?.latitude && a.event?.longitude"
+                class="small"
+                :href="googleMapUrl(a)"
+                target="_blank"
+                rel="noopener"
+              >Mở Google Maps</a>
+            </td>
+            <td>{{ formatNumber(a.event?.depth_km) }} km</td>
+            <td style="max-width: 260px;">{{ a.event?.location_text || '-' }}</td>
+            <td>
+              <span v-if="a.event?.risk_level !== null && a.event?.risk_level !== undefined" class="chip chip-warn">
+                Cấp {{ a.event.risk_level }}
+              </span>
+              <span v-else>-</span>
+            </td>
+            <td>
+              <span class="chip chip-ok">Map: {{ countImages(a, 'epicenter_map') }}</span>
+              <span class="chip chip-warn">Record: {{ countImages(a, 'seismic_record') }}</span>
+              <span class="chip chip-muted">Other: {{ countImages(a, 'other') }}</span>
+            </td>
+            <td>
+              <button class="btn" @click="selected = selected?.article_url === a.article_url ? null : a">
+                Chi tiết
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button class="btn" :disabled="page <= 1" @click="page--">← Trước</button>
+      <span>Trang {{ page }} / {{ totalPages }}</span>
+      <button class="btn" :disabled="page >= totalPages" @click="page++">Sau →</button>
+    </div>
+  </section>
+
+  <section v-if="selected" class="card drawer">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <h2 style="margin:0;">Chi tiết bài viết</h2>
+      <button class="btn" @click="selected = null">Đóng</button>
+    </div>
+
+    <h3>{{ selected.title }}</h3>
+    <div class="small">
+      URL:
+      <a :href="selected.article_url" target="_blank" rel="noopener">{{ selected.article_url }}</a>
+    </div>
+
+    <div class="image-grid" v-if="selected.images && selected.images.length">
+      <div class="image-card" v-for="img in selected.images" :key="img.url + img.index">
+        <img :src="imageSrc(img)" :alt="img.alt || img.type" @error="markImageError($event)" />
+        <div class="image-card-body">
+          <span class="chip">{{ imageLabel(img.type) }}</span>
+          <div class="small">{{ img.heading_context || img.alt || img.title || img.url }}</div>
+          <a class="small" :href="imageSrc(img)" target="_blank" rel="noopener">Mở ảnh</a>
+        </div>
+      </div>
+    </div>
+
+    <h3>Raw text</h3>
+    <div class="raw">{{ selected.raw_text || '-' }}</div>
+  </section>
+
+  <div class="footer">
+    Static VueJS viewer. Không upload dữ liệu lên server; file được đọc trực tiếp trong browser của bạn.
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      window,
+      articles: [],
+      selected: null,
+      error: "",
+      filters: {
+        search: "",
+        year: "",
+        image: "",
+        risk: ""
+      },
+      sortKey: "published_date",
+      sortDir: "desc",
+      page: 1,
+      pageSize: 50
+    };
+  },
+
+  computed: {
+    normalizedArticles() {
+      return this.articles.map(a => this.normalizeArticle(a));
+    },
+
+    years() {
+      const set = new Set();
+      for (const a of this.normalizedArticles) {
+        const y = this.yearOf(a);
+        if (y) set.add(y);
+      }
+      return Array.from(set).sort((a, b) => Number(b) - Number(a));
+    },
+
+    risks() {
+      const set = new Set();
+      for (const a of this.normalizedArticles) {
+        const r = a.event?.risk_level;
+        if (r !== null && r !== undefined && r !== "") set.add(String(r));
+      }
+      return Array.from(set).sort((a, b) => Number(a) - Number(b));
+    },
+
+    filteredArticles() {
+      const q = this.filters.search.trim().toLowerCase();
+
+      let rows = this.normalizedArticles.filter(a => {
+        if (q) {
+          const haystack = [
+            a.title,
+            a.published_date,
+            a.article_url,
+            a.event?.location_text,
+            a.raw_text
+          ].join(" ").toLowerCase();
+
+          if (!haystack.includes(q)) return false;
+        }
+
+        if (this.filters.year && this.yearOf(a) !== this.filters.year) return false;
+
+        if (this.filters.risk !== "") {
+          const r = a.event?.risk_level;
+          if (String(r) !== String(this.filters.risk)) return false;
+        }
+
+        if (this.filters.image) {
+          const total = (a.images || []).length;
+          const hasMap = this.countImages(a, "epicenter_map") > 0;
+          const hasRecord = this.countImages(a, "seismic_record") > 0;
+
+          if (this.filters.image === "epicenter_map" && !hasMap) return false;
+          if (this.filters.image === "seismic_record" && !hasRecord) return false;
+          if (this.filters.image === "any" && total === 0) return false;
+          if (this.filters.image === "none" && total > 0) return false;
+        }
+
+        return true;
+      });
+
+      rows.sort((a, b) => this.compareRows(a, b));
+      return rows;
+    },
+
+    pagedArticles() {
+      const start = (this.page - 1) * this.pageSize;
+      return this.filteredArticles.slice(start, start + this.pageSize);
+    },
+
+    totalPages() {
+      return Math.max(1, Math.ceil(this.filteredArticles.length / this.pageSize));
+    },
+
+    dateRange() {
+      const dates = this.filteredArticles
+        .map(a => a.published_date)
+        .filter(Boolean)
+        .sort();
+
+      if (!dates.length) return "-";
+      if (dates[0] === dates[dates.length - 1]) return dates[0];
+      return `${dates[0]} → ${dates[dates.length - 1]}`;
+    },
+
+    maxMagnitudeArticle() {
+      const rows = this.filteredArticles
+        .filter(a => typeof a.event?.magnitude === "number")
+        .sort((a, b) => b.event.magnitude - a.event.magnitude);
+
+      return rows[0] || null;
+    },
+
+    maxMagnitudeText() {
+      return this.maxMagnitudeArticle ? this.maxMagnitudeArticle.event.magnitude : "-";
+    },
+
+    imageStats() {
+      const stats = {
+        epicenter_map: 0,
+        seismic_record: 0,
+        other: 0
+      };
+
+      for (const a of this.filteredArticles) {
+        for (const img of (a.images || [])) {
+          if (stats[img.type] === undefined) stats.other++;
+          else stats[img.type]++;
+        }
+      }
+
+      return stats;
+    },
+
+    yearStats() {
+      const map = new Map();
+      for (const a of this.filteredArticles) {
+        const y = this.yearOf(a) || "Unknown";
+        map.set(y, (map.get(y) || 0) + 1);
+      }
+      return Array.from(map.entries())
+        .map(([year, count]) => ({ year, count }))
+        .sort((a, b) => Number(b.year) - Number(a.year));
+    },
+
+    riskStats() {
+      const map = new Map();
+      for (const a of this.filteredArticles) {
+        const r = a.event?.risk_level;
+        if (r === null || r === undefined || r === "") continue;
+        map.set(String(r), (map.get(String(r)) || 0) + 1);
+      }
+      return Array.from(map.entries())
+        .map(([risk, count]) => ({ risk, count }))
+        .sort((a, b) => Number(a.risk) - Number(b.risk));
+    },
+
+    completeness() {
+      let magnitude = 0;
+      let coord = 0;
+      let depth = 0;
+      let eventTime = 0;
+
+      for (const a of this.filteredArticles) {
+        if (typeof a.event?.magnitude === "number") magnitude++;
+        if (typeof a.event?.latitude === "number" && typeof a.event?.longitude === "number") coord++;
+        if (typeof a.event?.depth_km === "number") depth++;
+        if (a.event?.event_time_gmt || a.event?.event_time_hanoi) eventTime++;
+      }
+
+      return { magnitude, coord, depth, eventTime };
+    }
+  },
+
+  watch: {
+    filters: {
+      deep: true,
+      handler() {
+        this.page = 1;
+      }
+    },
+    pageSize() {
+      this.page = 1;
+    }
+  },
+
+  methods: {
+    async handleFile(event) {
+      this.error = "";
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        let rows = [];
+
+        if (file.name.toLowerCase().endsWith(".json")) {
+          const data = JSON.parse(text);
+          rows = Array.isArray(data) ? data : (data.articles || []);
+        } else if (file.name.toLowerCase().endsWith(".csv")) {
+          rows = this.parseCsv(text);
+        } else {
+          rows = this.parseJsonl(text);
+        }
+
+        this.articles = rows.map(a => this.normalizeArticle(a));
+        this.selected = null;
+        this.page = 1;
+
+        if (!this.articles.length) {
+          this.error = "File đã đọc được nhưng không thấy bài viết nào.";
+        }
+      } catch (err) {
+        console.error(err);
+        this.error = "Không đọc được file. Hãy chọn file data/articles.jsonl hoặc JSON export từ crawler.";
+      }
+    },
+
+    parseJsonl(text) {
+      return text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => JSON.parse(line));
+    },
+
+    parseCsv(text) {
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (!lines.length) return [];
+
+      const headers = this.splitCsvLine(lines[0]);
+
+      return lines.slice(1).map(line => {
+        const values = this.splitCsvLine(line);
+        const obj = {};
+        headers.forEach((h, i) => {
+          obj[h] = values[i] || "";
+        });
+
+        return {
+          source: "igp-vast.vn",
+          article_url: obj.article_url,
+          item_id: obj.item_id,
+          title: obj.title,
+          published_date: obj.published_date,
+          event: {
+            event_time_gmt: obj.event_time_gmt || null,
+            event_time_hanoi: obj.event_time_hanoi || null,
+            magnitude: this.toNumberOrNull(obj.magnitude),
+            latitude: this.toNumberOrNull(obj.latitude),
+            longitude: this.toNumberOrNull(obj.longitude),
+            depth_km: this.toNumberOrNull(obj.depth_km),
+            location_text: obj.location_text || null,
+            risk_level: this.toNumberOrNull(obj.risk_level)
+          },
+          images: []
+        };
+      });
+    },
+
+    splitCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === '"' && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = !inQuotes;
+        } else if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+
+      out.push(cur);
+      return out;
+    },
+
+    normalizeArticle(a) {
+      const event = a.event || {};
+
+      return {
+        ...a,
+        item_id: a.item_id ? String(a.item_id) : this.extractItemId(a.article_url),
+        title: a.title || "",
+        published_date: a.published_date || this.dateFromTitle(a.title || ""),
+        event: {
+          event_time_gmt: event.event_time_gmt || null,
+          event_time_hanoi: event.event_time_hanoi || null,
+          magnitude: this.toNumberOrNull(event.magnitude),
+          latitude: this.toNumberOrNull(event.latitude),
+          longitude: this.toNumberOrNull(event.longitude),
+          depth_km: this.toNumberOrNull(event.depth_km),
+          location_text: event.location_text || "",
+          risk_level: this.toNumberOrNull(event.risk_level)
+        },
+        images: Array.isArray(a.images) ? a.images : [],
+        raw_text: a.raw_text || ""
+      };
+    },
+
+    toNumberOrNull(v) {
+      if (v === null || v === undefined || v === "") return null;
+      const n = Number(String(v).replace(",", "."));
+      return Number.isFinite(n) ? n : null;
+    },
+
+    extractItemId(url) {
+      const m = String(url || "").match(/\/item\/(\d+)-/);
+      return m ? m[1] : "";
+    },
+
+    dateFromTitle(title) {
+      const m = String(title || "").match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
+      if (!m) return "";
+      const day = String(m[1]).padStart(2, "0");
+      const month = String(m[2]).padStart(2, "0");
+      const year = m[3];
+      return `${year}-${month}-${day}`;
+    },
+
+    yearOf(a) {
+      if (!a.published_date) return "";
+      const m = String(a.published_date).match(/^(\d{4})/);
+      return m ? m[1] : "";
+    },
+
+    countImages(a, type) {
+      return (a.images || []).filter(img => img.type === type).length;
+    },
+
+    formatNumber(v) {
+      if (v === null || v === undefined || v === "") return "-";
+      if (typeof v === "number") return Number.isInteger(v) ? String(v) : String(Math.round(v * 1000) / 1000);
+      return String(v);
+    },
+
+    imageSrc(img) {
+      return img.local_path || img.url || "";
+    },
+
+    imageLabel(type) {
+      if (type === "epicenter_map") return "Bản đồ chấn tâm";
+      if (type === "seismic_record") return "Băng ghi";
+      return "Ảnh khác";
+    },
+
+    markImageError(event) {
+      event.target.style.display = "none";
+    },
+
+    googleMapUrl(a) {
+      return `https://www.google.com/maps?q=${a.event.latitude},${a.event.longitude}`;
+    },
+
+    setSort(key) {
+      if (this.sortKey === key) {
+        this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        this.sortKey = key;
+        this.sortDir = "asc";
+      }
+    },
+
+    sortMark(key) {
+      if (this.sortKey !== key) return "";
+      return this.sortDir === "asc" ? "▲" : "▼";
+    },
+
+    compareRows(a, b) {
+      const key = this.sortKey;
+
+      const av = this.getSortValue(a, key);
+      const bv = this.getSortValue(b, key);
+
+      let result = 0;
+      if (av === null || av === undefined || av === "") result = 1;
+      else if (bv === null || bv === undefined || bv === "") result = -1;
+      else if (typeof av === "number" && typeof bv === "number") result = av - bv;
+      else result = String(av).localeCompare(String(bv), "vi");
+
+      return this.sortDir === "asc" ? result : -result;
+    },
+
+    getSortValue(a, key) {
+      if (key === "magnitude") return a.event?.magnitude;
+      if (key === "depth_km") return a.event?.depth_km;
+      if (key === "risk_level") return a.event?.risk_level;
+      return a[key];
+    },
+
+    flatRows() {
+      return this.filteredArticles.map(a => ({
+        item_id: a.item_id || "",
+        title: a.title || "",
+        published_date: a.published_date || "",
+        article_url: a.article_url || "",
+        event_time_gmt: a.event?.event_time_gmt || "",
+        event_time_hanoi: a.event?.event_time_hanoi || "",
+        magnitude: this.formatNumber(a.event?.magnitude),
+        latitude: this.formatNumber(a.event?.latitude),
+        longitude: this.formatNumber(a.event?.longitude),
+        depth_km: this.formatNumber(a.event?.depth_km),
+        location_text: a.event?.location_text || "",
+        risk_level: this.formatNumber(a.event?.risk_level),
+        epicenter_map_count: this.countImages(a, "epicenter_map"),
+        seismic_record_count: this.countImages(a, "seismic_record"),
+        other_image_count: this.countImages(a, "other")
+      }));
+    },
+
+    csvEscape(v) {
+      const s = String(v ?? "");
+      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    },
+
+    downloadCsv() {
+      const rows = this.flatRows();
+      if (!rows.length) return;
+
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.map(this.csvEscape).join(","),
+        ...rows.map(row => headers.map(h => this.csvEscape(row[h])).join(","))
+      ].join("\n");
+
+      this.downloadBlob(csv, "igp_earthquake_report.csv", "text/csv;charset=utf-8");
+    },
+
+    downloadJson() {
+      const json = JSON.stringify(this.filteredArticles, null, 2);
+      this.downloadBlob(json, "igp_earthquake_report.json", "application/json;charset=utf-8");
+    },
+
+    downloadReportHtml() {
+      const rows = this.filteredArticles;
+      const generatedAt = new Date().toLocaleString("vi-VN");
+
+      const tableRows = rows.map(a => `
+        <tr>
+          <td>${this.escapeHtml(a.published_date || "")}</td>
+          <td>
+            <a href="${this.escapeAttr(a.article_url || "")}" target="_blank">
+              ${this.escapeHtml(a.title || "")}
+            </a>
+            <div class="small">ID: ${this.escapeHtml(a.item_id || "")}</div>
+          </td>
+          <td>${this.escapeHtml(this.formatNumber(a.event?.magnitude))}</td>
+          <td>${this.escapeHtml(this.formatNumber(a.event?.latitude))}, ${this.escapeHtml(this.formatNumber(a.event?.longitude))}</td>
+          <td>${this.escapeHtml(this.formatNumber(a.event?.depth_km))} km</td>
+          <td>${this.escapeHtml(a.event?.location_text || "")}</td>
+          <td>${this.escapeHtml(this.formatNumber(a.event?.risk_level))}</td>
+          <td>Map: ${this.countImages(a, "epicenter_map")} / Record: ${this.countImages(a, "seismic_record")}</td>
+        </tr>
+      `).join("");
+
+      const topImages = rows.flatMap(a =>
+        (a.images || [])
+          .filter(img => img.type === "epicenter_map" || img.type === "seismic_record")
+          .slice(0, 2)
+          .map(img => ({ article: a, img }))
+      ).slice(0, 24);
+
+      const imageHtml = topImages.map(({ article, img }) => `
+        <div class="img-card">
+          <img src="${this.escapeAttr(this.imageSrc(img))}" alt="${this.escapeAttr(img.alt || img.type || "")}">
+          <div><b>${this.escapeHtml(this.imageLabel(img.type))}</b></div>
+          <div class="small">${this.escapeHtml(article.title || "")}</div>
+        </div>
+      `).join("");
+
+      const html = `<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>IGP/VAST Earthquake Extracted Report</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111827}
+h1{margin-bottom:4px}
+.small{font-size:12px;color:#6b7280}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#f9fafb}
+.value{font-size:24px;font-weight:800}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+th{background:#f3f4f6}
+.images{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.img-card{border:1px solid #e5e7eb;border-radius:10px;padding:8px}
+.img-card img{width:100%;height:180px;object-fit:contain;background:#f3f4f6}
+@media print{body{margin:0}.images{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<h1>IGP/VAST Earthquake Extracted Report</h1>
+<div class="small">Generated at: ${this.escapeHtml(generatedAt)}</div>
+<div class="stats">
+  <div class="card"><div>Total articles</div><div class="value">${rows.length}</div></div>
+  <div class="card"><div>Date range</div><div class="value" style="font-size:18px">${this.escapeHtml(this.dateRange)}</div></div>
+  <div class="card"><div>Max magnitude</div><div class="value">${this.escapeHtml(this.maxMagnitudeText)}</div></div>
+  <div class="card"><div>Images</div><div class="value">${this.imageStats.epicenter_map}/${this.imageStats.seismic_record}</div><div class="small">Map / Record</div></div>
+</div>
+
+<h2>Important Images</h2>
+<div class="images">${imageHtml}</div>
+
+<h2>Metadata Table</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Title</th><th>M</th><th>Coordinate</th><th>Depth</th><th>Location</th><th>Risk</th><th>Images</th>
+</tr>
+</thead>
+<tbody>
+${tableRows}
+</tbody>
+</table>
+</body>
+</html>`;
+
+      this.downloadBlob(html, "igp_earthquake_report.html", "text/html;charset=utf-8");
+    },
+
+    downloadBlob(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    },
+
+    escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    },
+
+    escapeAttr(s) {
+      return this.escapeHtml(s).replace(/"/g, "&quot;");
+    },
+
+    resetAll() {
+      this.articles = [];
+      this.selected = null;
+      this.error = "";
+      this.filters = {
+        search: "",
+        year: "",
+        image: "",
+        risk: ""
+      };
+      this.page = 1;
+    }
+  }
+}).mount("#app");
+</script>
+</body>
+</html>
