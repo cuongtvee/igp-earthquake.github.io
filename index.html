@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IGP/VAST Earthquake Dashboard V1</title>
+  <title>IGP/VAST Earthquake Dashboard</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{--bg:#f5f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
     *{box-sizing:border-box}
@@ -22,6 +23,7 @@
     .btn-ok{background:var(--ok);border-color:var(--ok);color:white}
     .btn-danger{background:var(--danger);border-color:var(--danger);color:white}
     .file-input{display:none}
+    .export-select{width:auto;min-width:150px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:white;color:var(--text);font-weight:700}
     .chip{display:inline-flex;border-radius:999px;padding:4px 9px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700;margin:2px 4px 2px 0;white-space:nowrap}
     .chip-ok{background:#dcfce7;color:#166534}.chip-warn{background:#fef3c7;color:#92400e}.chip-muted{background:#f3f4f6;color:#4b5563}
     .notice{border-left:4px solid var(--primary);background:#eff6ff;padding:12px 14px;border-radius:10px;line-height:1.55;color:#1e3a8a;margin-top:12px}
@@ -54,7 +56,7 @@
     <h1>IGP/VAST Earthquake Dashboard</h1>
     <p>
       Trang tự load <b>data/articles.jsonl</b>, hiển thị dashboard và ảnh từ URL gốc <b>igp-vast.vn</b>.
-      Không cần upload <code>data/images/</code> lên GitHub Pages. Có thể bấm <b>Extract Report HTML</b> để xuất báo cáo.
+      Không cần upload <code>data/images/</code> lên GitHub Pages. Có thể bấm <b>Extract Report HTML</b> hoặc chọn <b>Excel/CSV</b> để export theo template.
     </p>
   </section>
 
@@ -64,7 +66,11 @@
       <label class="btn" for="filePicker">📂 Chọn articles.jsonl</label>
       <input id="filePicker" class="file-input" type="file" accept=".jsonl,.json,.txt,.csv" @change="handleFile" />
       <button class="btn btn-ok" :disabled="!articles.length" @click="downloadReportHtml">📄 Extract Report HTML</button>
-      <button class="btn" :disabled="!articles.length" @click="downloadCsv">⬇️ Export CSV</button>
+      <select class="export-select" v-model="exportType" :disabled="!articles.length">
+        <option value="xlsx">Excel (.xlsx)</option>
+        <option value="csv">CSV (.csv)</option>
+      </select>
+      <button class="btn" :disabled="!articles.length" @click="exportTemplateData">⬇️ Export Template</button>
       <button class="btn" :disabled="!articles.length" @click="downloadJson">⬇️ Export JSON</button>
       <button class="btn" :disabled="!articles.length" @click="window.print()">🖨️ Print</button>
       <button class="btn btn-danger" :disabled="!articles.length" @click="resetAll">Reset</button>
@@ -191,7 +197,8 @@ createApp({
       sortKey: "published_date",
       sortDir: "desc",
       page: 1,
-      pageSize: 50
+      pageSize: 50,
+      exportType: "xlsx"
     };
   },
 
@@ -440,29 +447,159 @@ createApp({
       if (key === "risk_level") return a.event?.risk_level;
       return a[key];
     },
-    flatRows() {
-      return this.filteredArticles.map(a => ({
-        item_id:a.item_id||"", title:a.title||"", published_date:a.published_date||"", article_url:a.article_url||"",
-        event_time_gmt:a.event?.event_time_gmt||"", event_time_hanoi:a.event?.event_time_hanoi||"",
-        magnitude:this.formatNumber(a.event?.magnitude), latitude:this.formatNumber(a.event?.latitude),
-        longitude:this.formatNumber(a.event?.longitude), depth_km:this.formatNumber(a.event?.depth_km),
-        location_text:a.event?.location_text||"", risk_level:this.formatNumber(a.event?.risk_level),
-        epicenter_map_count:this.countImages(a,"epicenter_map"), seismic_record_count:this.countImages(a,"seismic_record"),
-        other_image_count:this.countImages(a,"other")
-      }));
+    templateRows() {
+      const rows = this.filteredArticles;
+
+      return rows.map((a, index) => {
+        const event = a.event || {};
+        const imageLinks = (a.images || [])
+          .filter(img => img.type === "epicenter_map" || img.type === "seismic_record" || img.type === "other")
+          .map(img => img.url || img.local_path || "")
+          .filter(Boolean)
+          .join(" | ");
+
+        const dt = this.bestDateTime(a);
+
+        return {
+          "STT": index + 1,
+          "Ngày": dt.date,
+          "Thời gian": dt.time,
+          "Vĩ độ (°N)": this.valueOrBlank(event.latitude),
+          "Kinh độ (°E)": this.valueOrBlank(event.longitude),
+          "Độ sâu (km)": this.valueOrBlank(event.depth_km),
+          "Độ lớn": this.valueOrBlank(event.magnitude),
+          "Kiểu": "M",
+          "Nguồn": "IGP/VAST",
+          "Link Ảnh": imageLinks,
+          "Địa điểm": event.location_text || "",
+          "Nguồn tham khảo": a.article_url || ""
+        };
+      });
     },
-    csvEscape(v) {
-      const s = String(v ?? "");
-      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-      return s;
+
+    valueOrBlank(v) {
+      if (v === null || v === undefined || v === "") return "";
+      return v;
     },
-    downloadCsv() {
-      const rows = this.flatRows();
+
+    bestDateTime(a) {
+      const event = a.event || {};
+      const raw = event.event_time_hanoi || event.event_time_gmt || a.published_date || "";
+
+      // ISO datetime: 2026-07-08T13:34:17...
+      const isoMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (isoMatch) {
+        return {
+          date: `${isoMatch[1]}/${isoMatch[2]}/${isoMatch[3]}`,
+          time: `${isoMatch[4]}:${isoMatch[5]}:${isoMatch[6] || "00"}`
+        };
+      }
+
+      // Date only: 2026-07-08
+      const dateMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (dateMatch) {
+        return {
+          date: `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}`,
+          time: ""
+        };
+      }
+
+      return {
+        date: a.published_date || "",
+        time: ""
+      };
+    },
+
+    exportTemplateData() {
+      if (this.exportType === "xlsx") {
+        this.downloadTemplateExcel();
+      } else {
+        this.downloadTemplateCsv();
+      }
+    },
+
+    downloadTemplateCsv() {
+      const rows = this.templateRows();
       if (!rows.length) return;
-      const headers = Object.keys(rows[0]);
-      const csv = [headers.map(this.csvEscape).join(","), ...rows.map(row=>headers.map(h=>this.csvEscape(row[h])).join(","))].join("\n");
-      this.downloadBlob(csv, "igp_earthquake_report.csv", "text/csv;charset=utf-8");
+
+      const headers = [
+        "STT",
+        "Ngày",
+        "Thời gian",
+        "Vĩ độ (°N)",
+        "Kinh độ (°E)",
+        "Độ sâu (km)",
+        "Độ lớn",
+        "Kiểu",
+        "Nguồn",
+        "Link Ảnh",
+        "Địa điểm",
+        "Nguồn tham khảo"
+      ];
+
+      const csv = [
+        headers.map(this.csvEscape).join(","),
+        ...rows.map(row => headers.map(h => this.csvEscape(row[h])).join(","))
+      ].join("\n");
+
+      // UTF-8 BOM helps Excel display Vietnamese text correctly.
+      this.downloadBlob("\ufeff" + csv, "igp_earthquake_template_export.csv", "text/csv;charset=utf-8");
     },
+
+    downloadTemplateExcel() {
+      const rows = this.templateRows();
+      if (!rows.length) return;
+
+      if (!window.XLSX) {
+        alert("Không load được thư viện Excel. Hãy chọn CSV hoặc kiểm tra internet/CDN.");
+        return;
+      }
+
+      const headers = [
+        "STT",
+        "Ngày",
+        "Thời gian",
+        "Vĩ độ (°N)",
+        "Kinh độ (°E)",
+        "Độ sâu (km)",
+        "Độ lớn",
+        "Kiểu",
+        "Nguồn",
+        "Link Ảnh",
+        "Địa điểm",
+        "Nguồn tham khảo"
+      ];
+
+      const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+
+      worksheet["!cols"] = [
+        { wch: 6 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 10 },
+        { wch: 8 },
+        { wch: 14 },
+        { wch: 55 },
+        { wch: 45 },
+        { wch: 60 }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "EarthquakeData");
+      XLSX.writeFile(workbook, "igp_earthquake_template_export.xlsx");
+    },
+
+    flatRows() {
+      return this.templateRows();
+    },
+
+    downloadCsv() {
+      this.downloadTemplateCsv();
+    },
+
     downloadJson() {
       this.downloadBlob(JSON.stringify(this.filteredArticles,null,2), "igp_earthquake_report.json", "application/json;charset=utf-8");
     },
