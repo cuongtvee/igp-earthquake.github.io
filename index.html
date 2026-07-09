@@ -3,169 +3,516 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IGP/VAST Earthquake Dashboard</title>
+  <title>IGP/VAST Earthquake Dashboard v2</title>
+
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    [v-cloak]{display:none}
-    .app{max-width:1380px;margin:0 auto;padding:20px}
-    .hero{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:white;border-radius:18px;padding:24px;margin-bottom:16px;box-shadow:0 12px 30px rgba(37,99,235,.22)}
-    .hero h1{margin:0 0 8px;font-size:28px}
-    .hero p{margin:0;line-height:1.55;opacity:.95}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 6px 20px rgba(15,23,42,.05);margin-bottom:14px}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .btn{appearance:none;border:1px solid var(--line);background:white;color:var(--text);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:700;text-decoration:none}
-    .btn:hover{box-shadow:0 8px 16px rgba(15,23,42,.08)}
-    .btn-primary{background:var(--primary);border-color:var(--primary);color:white}
-    .btn-ok{background:var(--ok);border-color:var(--ok);color:white}
-    .btn-danger{background:var(--danger);border-color:var(--danger);color:white}
-    .file-input{display:none}
-    .export-select{width:auto;min-width:150px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:white;color:var(--text);font-weight:700}
-    .chip{display:inline-flex;border-radius:999px;padding:4px 9px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700;margin:2px 4px 2px 0;white-space:nowrap}
-    .chip-ok{background:#dcfce7;color:#166534}.chip-warn{background:#fef3c7;color:#92400e}.chip-muted{background:#f3f4f6;color:#4b5563}
-    .notice{border-left:4px solid var(--primary);background:#eff6ff;padding:12px 14px;border-radius:10px;line-height:1.55;color:#1e3a8a;margin-top:12px}
-    .warning{border-left-color:var(--warn);background:#fffbeb;color:#92400e}
-    .grid{display:grid;gap:14px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .stat-title{color:var(--muted);font-size:13px;margin-bottom:8px}.stat-value{font-size:26px;font-weight:800}.stat-sub{color:var(--muted);font-size:13px;margin-top:6px}
-    .filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px;margin-top:12px}
-    input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:white;color:var(--text)}
-    .table-wrap{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:14px;background:white}
-    table{width:100%;border-collapse:collapse;min-width:1180px;font-size:14px}
-    th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
-    th{position:sticky;top:0;background:#f9fafb;z-index:2;font-size:13px;color:#374151;cursor:pointer}
-    tr:hover td{background:#f8fafc}
-    .title-link{color:var(--primary);font-weight:700;text-decoration:none}.title-link:hover{text-decoration:underline}
-    .small{font-size:12px;color:var(--muted);line-height:1.45}
-    .image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
-    .image-card{border:1px solid var(--line);border-radius:12px;background:white;overflow:hidden}
-    .image-card img{width:100%;height:180px;object-fit:contain;background:#f3f4f6;display:block}
-    .image-card-body{padding:10px}
-    .raw{white-space:pre-wrap;background:#111827;color:#f9fafb;padding:12px;border-radius:12px;font-size:13px;line-height:1.55;max-height:260px;overflow:auto}
-    .pagination{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
-    @media(max-width:1000px){.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}.image-grid{grid-template-columns:1fr}}
-    @media(max-width:640px){.app{padding:12px}.grid-4,.grid-3,.filters{grid-template-columns:1fr}.hero h1{font-size:22px}}
-    @media print{.toolbar,.filters,.pagination,.notice,.btn{display:none!important}body{background:white}.app{max-width:none;padding:0}.card{box-shadow:none}.table-wrap{max-height:none;overflow:visible}th{position:static}}
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --purple: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    [v-cloak] { display: none; }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.22);
+    }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; }
+    .hero p { margin: 0; line-height: 1.55; opacity: 0.95; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+      margin-bottom: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn:hover { box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-ok { background: var(--ok); border-color: var(--ok); color: white; }
+    .btn-warn { background: var(--warn); border-color: var(--warn); color: white; }
+    .btn-danger { background: var(--danger); border-color: var(--danger); color: white; }
+    .btn-purple { background: var(--purple); border-color: var(--purple); color: white; }
+
+    .file-input { display: none; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      background: white;
+      color: var(--text);
+      font-family: inherit;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .export-select {
+      width: auto;
+      min-width: 145px;
+      font-weight: 700;
+    }
+
+    .chip {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 4px 2px 0;
+      white-space: nowrap;
+    }
+    .chip-ok { background: #dcfce7; color: #166534; }
+    .chip-warn { background: #fef3c7; color: #92400e; }
+    .chip-muted { background: #f3f4f6; color: #4b5563; }
+    .chip-danger { background: #fee2e2; color: #991b1b; }
+
+    .notice {
+      border-left: 4px solid var(--primary);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 10px;
+      line-height: 1.55;
+      color: #1e3a8a;
+      margin-top: 12px;
+    }
+    .warning {
+      border-left-color: var(--warn);
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .grid { display: grid; gap: 14px; }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .stat-title { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .stat-value { font-size: 26px; font-weight: 800; line-height: 1.2; }
+    .stat-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.3fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1360px;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      z-index: 2;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      user-select: none;
+    }
+    tr:hover td { background: #f8fafc; }
+
+    .title-link {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .title-link:hover { text-decoration: underline; }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .thumb {
+      width: 130px;
+      height: 86px;
+      object-fit: contain;
+      background: #f3f4f6;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .raw {
+      white-space: pre-wrap;
+      background: #111827;
+      color: #f9fafb;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .image-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      overflow: hidden;
+    }
+    .image-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: #f3f4f6;
+      display: block;
+    }
+    .image-card-body { padding: 10px; }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 50;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+      overflow: auto;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      width: min(920px, 100%);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.24);
+    }
+    .modal h2 { margin: 0 0 12px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 5px;
+    }
+    .form-span-2 { grid-column: span 2; }
+    .form-span-4 { grid-column: span 4; }
+
+    @media (max-width: 1100px) {
+      .grid-4, .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filters { grid-template-columns: 1fr 1fr; }
+      .image-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .form-span-2, .form-span-4 { grid-column: span 2; }
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 12px; }
+      .grid-4, .grid-3, .grid-2, .filters { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 22px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-span-2, .form-span-4 { grid-column: span 1; }
+    }
+
+    @media print {
+      .toolbar, .filters, .pagination, .notice, .btn { display: none !important; }
+      body { background: white; }
+      .app { max-width: none; padding: 0; }
+      .card { box-shadow: none; }
+      .table-wrap { max-height: none; overflow: visible; }
+      th { position: static; }
+    }
   </style>
 </head>
+
 <body>
 <div id="app" class="app" v-cloak>
   <section class="hero">
     <h1>IGP/VAST Earthquake Dashboard</h1>
     <p>
-      Trang tự load <b>data/articles.jsonl</b>, hiển thị dashboard và ảnh từ URL gốc <b>igp-vast.vn</b>.
-      Không cần upload <code>data/images/</code> lên GitHub Pages. Có thể bấm <b>Extract Report HTML</b> hoặc chọn <b>Excel/CSV</b> để export theo template.
+      Tự load <b>data/articles.jsonl</b>, hiển thị dashboard, ảnh gốc từ <b>igp-vast.vn</b>,
+      hỗ trợ edit trong browser, export report HTML có filter/sort/search, và export XLSX/CSV theo 8 trường yêu cầu.
     </p>
   </section>
 
   <section class="card">
     <div class="toolbar">
       <button class="btn btn-primary" @click="autoLoadData">🔄 Load data/articles.jsonl</button>
+
       <label class="btn" for="filePicker">📂 Chọn articles.jsonl</label>
-      <input id="filePicker" class="file-input" type="file" accept=".jsonl,.json,.txt,.csv" @change="handleFile" />
-      <button class="btn btn-ok" :disabled="!articles.length" @click="downloadReportHtml">📄 Extract Report HTML</button>
+      <input id="filePicker" class="file-input" type="file" accept=".jsonl,.json,.txt" @change="handleFile" />
+
+      <button class="btn btn-ok" :disabled="!articles.length" @click="downloadReportHtml">
+        📄 Export HTML Report
+      </button>
+
       <select class="export-select" v-model="exportType" :disabled="!articles.length">
         <option value="xlsx">Excel (.xlsx)</option>
         <option value="csv">CSV (.csv)</option>
       </select>
-      <button class="btn" :disabled="!articles.length" @click="exportTemplateData">⬇️ Export Template</button>
-      <button class="btn" :disabled="!articles.length" @click="downloadJson">⬇️ Export JSON</button>
+
+      <button class="btn" :disabled="!articles.length" @click="exportTemplateData">
+        ⬇️ Export XLSX/CSV
+      </button>
+
+      <button class="btn btn-purple" :disabled="!articles.length" @click="downloadUpdatedJson">
+        💾 Download updated JSONL
+      </button>
+
+      <button class="btn btn-warn" :disabled="!Object.keys(edits).length" @click="clearEdits">
+        Clear edits
+      </button>
+
       <button class="btn" :disabled="!articles.length" @click="window.print()">🖨️ Print</button>
-      <button class="btn btn-danger" :disabled="!articles.length" @click="resetAll">Reset</button>
+
       <span class="chip chip-muted" v-if="autoLoadStatus==='loading'">Đang load...</span>
       <span class="chip chip-ok" v-if="autoLoadStatus==='loaded'">Đã load data/articles.jsonl</span>
       <span class="chip chip-warn" v-if="autoLoadStatus==='failed'">Auto load chưa thành công</span>
+      <span class="chip chip-danger" v-if="Object.keys(edits).length">Có {{ Object.keys(edits).length }} bản edit local</span>
     </div>
 
     <div v-if="!articles.length" class="notice">
-      <b>GitHub Pages:</b> đặt file <code>index.html</code> cùng cấp với thư mục <code>data/</code>.
-      Trang sẽ tự load <code>data/articles.jsonl</code>. Nếu test local bằng double-click bị chặn,
-      hãy chạy <code>python -m http.server 8080</code> rồi mở <code>http://localhost:8080/</code>.
+      <b>GitHub Pages:</b> đặt <code>index.html</code> cùng cấp với <code>data/articles.jsonl</code>.
+      Nếu test local bị chặn fetch, chạy <code>python -m http.server 8080</code> rồi mở <code>http://localhost:8080/</code>.
     </div>
 
     <div v-if="error" class="notice warning">{{ error }}</div>
 
     <div v-if="articles.length" class="filters">
       <input v-model="filters.search" placeholder="Tìm tiêu đề, địa điểm, nội dung..." />
-      <select v-model="filters.year"><option value="">Tất cả năm</option><option v-for="year in years" :key="year" :value="year">{{ year }}</option></select>
+      <select v-model="filters.year">
+        <option value="">Tất cả năm</option>
+        <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+      </select>
+      <select v-model="filters.locality">
+        <option value="">Tất cả địa phương</option>
+        <option v-for="loc in localities" :key="loc" :value="loc">{{ loc }}</option>
+      </select>
       <select v-model="filters.image">
         <option value="">Tất cả ảnh</option>
         <option value="epicenter_map">Có bản đồ chấn tâm</option>
         <option value="seismic_record">Có băng ghi</option>
-        <option value="any">Có ảnh bất kỳ</option>
+        <option value="both">Có cả 2 loại</option>
         <option value="none">Không có ảnh</option>
       </select>
-      <select v-model="filters.risk"><option value="">Tất cả cấp rủi ro</option><option v-for="risk in risks" :key="risk" :value="risk">Cấp {{ risk }}</option></select>
-      <select v-model.number="pageSize"><option :value="25">25 dòng/trang</option><option :value="50">50 dòng/trang</option><option :value="100">100 dòng/trang</option><option :value="250">250 dòng/trang</option></select>
+      <select v-model="filters.risk">
+        <option value="">Tất cả cấp rủi ro</option>
+        <option v-for="risk in risks" :key="risk" :value="risk">Cấp {{ risk }}</option>
+      </select>
+      <select v-model.number="pageSize">
+        <option :value="25">25 dòng/trang</option>
+        <option :value="50">50 dòng/trang</option>
+        <option :value="100">100 dòng/trang</option>
+        <option :value="250">250 dòng/trang</option>
+      </select>
     </div>
   </section>
 
   <section v-if="articles.length" class="grid grid-4">
-    <div class="card"><div class="stat-title">Tổng số bài</div><div class="stat-value">{{ filteredArticles.length }}</div><div class="stat-sub">Sau lọc / {{ articles.length }} bài gốc</div></div>
-    <div class="card"><div class="stat-title">Khoảng thời gian</div><div class="stat-value" style="font-size:20px">{{ dateRange }}</div><div class="stat-sub">Theo published_date</div></div>
-    <div class="card"><div class="stat-title">Magnitude lớn nhất</div><div class="stat-value">{{ maxMagnitudeText }}</div><div class="stat-sub">{{ maxMagnitudeArticle?.title || 'Không có dữ liệu' }}</div></div>
-    <div class="card"><div class="stat-title">Ảnh quan trọng</div><div class="stat-value">{{ imageStats.epicenter_map }} / {{ imageStats.seismic_record }}</div><div class="stat-sub">Bản đồ / Băng ghi</div></div>
-  </section>
-
-  <section v-if="articles.length" class="grid grid-3">
-    <div class="card"><h3 style="margin-top:0">Thống kê theo năm</h3><div v-for="row in yearStats" :key="row.year" style="margin-bottom:8px"><span class="chip">{{ row.year }}</span><span>{{ row.count }} bài</span></div></div>
-    <div class="card"><h3 style="margin-top:0">Thống kê cấp rủi ro</h3><div v-if="riskStats.length"><div v-for="row in riskStats" :key="row.risk" style="margin-bottom:8px"><span class="chip chip-warn">Cấp {{ row.risk }}</span><span>{{ row.count }} bài</span></div></div><div v-else class="small">Không có dữ liệu cấp rủi ro.</div></div>
-    <div class="card"><h3 style="margin-top:0">Chất lượng metadata</h3><div><span class="chip chip-ok">Magnitude</span> {{ completeness.magnitude }} bài</div><div><span class="chip chip-ok">Tọa độ</span> {{ completeness.coord }} bài</div><div><span class="chip chip-ok">Độ sâu</span> {{ completeness.depth }} bài</div><div><span class="chip chip-ok">Thời gian GMT</span> {{ completeness.eventTime }} bài</div></div>
+    <div class="card">
+      <div class="stat-title">Tổng số bài</div>
+      <div class="stat-value">{{ filteredArticles.length }}</div>
+      <div class="stat-sub">Sau lọc / {{ articles.length }} bài gốc</div>
+    </div>
+    <div class="card">
+      <div class="stat-title">Khoảng thời gian</div>
+      <div class="stat-value" style="font-size:20px">{{ dateRange }}</div>
+      <div class="stat-sub">Theo ngày sự kiện hoặc ngày bài viết</div>
+    </div>
+    <div class="card">
+      <div class="stat-title">Magnitude lớn nhất</div>
+      <div class="stat-value">{{ maxMagnitudeText }}</div>
+      <div class="stat-sub">{{ maxMagnitudeArticle?.title || 'Không có dữ liệu' }}</div>
+    </div>
+    <div class="card">
+      <div class="stat-title">Ảnh quan trọng</div>
+      <div class="stat-value">{{ imageStats.epicenter_map }} / {{ imageStats.seismic_record }}</div>
+      <div class="stat-sub">Bản đồ chấn tâm / Băng ghi</div>
+    </div>
   </section>
 
   <section v-if="articles.length" class="card">
-    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
-      <h2 style="margin:0">Danh sách tin động đất</h2>
-      <div class="small">Click tiêu đề để mở trang gốc. Click “Chi tiết” để xem raw text và ảnh.</div>
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <h2 style="margin:0">Metadata Table</h2>
+      <div class="small">Bảng chính có ảnh bản đồ chấn tâm và băng ghi nếu có. Có thể edit từng dòng.</div>
     </div>
 
     <div class="table-wrap" style="margin-top:12px">
       <table>
         <thead>
           <tr>
-            <th @click="setSort('published_date')">Ngày {{ sortMark('published_date') }}</th>
+            <th @click="setSort('date')">Ngày {{ sortMark('date') }}</th>
+            <th @click="setSort('time')">Thời gian {{ sortMark('time') }}</th>
             <th @click="setSort('title')">Tiêu đề {{ sortMark('title') }}</th>
-            <th @click="setSort('magnitude')">M {{ sortMark('magnitude') }}</th>
+            <th @click="setSort('magnitude')">Độ lớn {{ sortMark('magnitude') }}</th>
             <th>Tọa độ</th>
             <th @click="setSort('depth_km')">Độ sâu {{ sortMark('depth_km') }}</th>
-            <th>Địa điểm</th>
-            <th @click="setSort('risk_level')">Rủi ro {{ sortMark('risk_level') }}</th>
-            <th>Ảnh</th>
+            <th @click="setSort('locality')">Địa phương {{ sortMark('locality') }}</th>
+            <th>Bản đồ chấn tâm</th>
+            <th>Băng ghi</th>
+            <th>Nguồn</th>
             <th>Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="a in pagedArticles" :key="a.item_id || a.article_url">
-            <td><b>{{ a.published_date || '-' }}</b><div class="small">{{ a.event?.event_time_hanoi || a.event?.event_time_gmt || '' }}</div></td>
-            <td style="max-width:340px"><a class="title-link" :href="a.article_url" target="_blank" rel="noopener">{{ a.title || '(Không có tiêu đề)' }}</a><div class="small">ID: {{ a.item_id || '-' }}</div></td>
+            <td><b>{{ bestDateTime(a).date || '-' }}</b></td>
+            <td>{{ bestDateTime(a).time || '-' }}</td>
+            <td style="max-width:280px">
+              <a class="title-link" :href="a.article_url" target="_blank" rel="noopener">
+                {{ a.title || '(Không có tiêu đề)' }}
+              </a>
+              <div class="small">ID: {{ a.item_id || '-' }}</div>
+              <span v-if="isEdited(a)" class="chip chip-danger">Edited</span>
+            </td>
             <td><span class="chip">{{ formatNumber(a.event?.magnitude) }}</span></td>
-            <td><div>{{ formatNumber(a.event?.latitude) }}, {{ formatNumber(a.event?.longitude) }}</div><a v-if="a.event?.latitude && a.event?.longitude" class="small" :href="googleMapUrl(a)" target="_blank">Mở Google Maps</a></td>
+            <td>
+              {{ formatNumber(a.event?.latitude) }}, {{ formatNumber(a.event?.longitude) }}
+              <div>
+                <a v-if="a.event?.latitude && a.event?.longitude" class="small" :href="googleMapUrl(a)" target="_blank" rel="noopener">Google Maps</a>
+              </div>
+            </td>
             <td>{{ formatNumber(a.event?.depth_km) }} km</td>
-            <td style="max-width:260px">{{ a.event?.location_text || '-' }}</td>
-            <td><span v-if="a.event?.risk_level!==null && a.event?.risk_level!==undefined" class="chip chip-warn">Cấp {{ a.event.risk_level }}</span><span v-else>-</span></td>
-            <td><span class="chip chip-ok">Map: {{ countImages(a,'epicenter_map') }}</span><span class="chip chip-warn">Record: {{ countImages(a,'seismic_record') }}</span><span class="chip chip-muted">Other: {{ countImages(a,'other') }}</span></td>
-            <td><button class="btn" @click="selected = selected?.article_url === a.article_url ? null : a">Chi tiết</button></td>
+            <td style="max-width:220px">
+              <b>{{ localityOf(a) || '-' }}</b>
+              <div class="small">{{ a.event?.location_text || '' }}</div>
+            </td>
+            <td>
+              <a v-if="firstImage(a, 'epicenter_map')" :href="imageSrc(firstImage(a, 'epicenter_map'))" target="_blank">
+                <img class="thumb" :src="imageSrc(firstImage(a, 'epicenter_map'))" @error="markImageError($event)" />
+              </a>
+              <span v-else class="small">Không có</span>
+            </td>
+            <td>
+              <a v-if="firstImage(a, 'seismic_record')" :href="imageSrc(firstImage(a, 'seismic_record'))" target="_blank">
+                <img class="thumb" :src="imageSrc(firstImage(a, 'seismic_record'))" @error="markImageError($event)" />
+              </a>
+              <span v-else class="small">Không có</span>
+            </td>
+            <td>
+              <a class="small" :href="a.article_url" target="_blank" rel="noopener">Bài gốc</a>
+            </td>
+            <td>
+              <button class="btn" @click="openEdit(a)">Edit</button>
+              <button class="btn" @click="selected = selected?.article_url === a.article_url ? null : a">Chi tiết</button>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="pagination">
-      <button class="btn" :disabled="page<=1" @click="page--">← Trước</button>
+      <button class="btn" :disabled="page <= 1" @click="page--">← Trước</button>
       <span>Trang {{ page }} / {{ totalPages }}</span>
-      <button class="btn" :disabled="page>=totalPages" @click="page++">Sau →</button>
+      <button class="btn" :disabled="page >= totalPages" @click="page++">Sau →</button>
     </div>
   </section>
 
   <section v-if="selected" class="card">
-    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
       <h2 style="margin:0">Chi tiết bài viết</h2>
-      <button class="btn" @click="selected=null">Đóng</button>
+      <button class="btn" @click="selected = null">Đóng</button>
     </div>
+
     <h3>{{ selected.title }}</h3>
     <div class="small">URL: <a :href="selected.article_url" target="_blank">{{ selected.article_url }}</a></div>
+
     <div class="image-grid" v-if="selected.images && selected.images.length">
       <div class="image-card" v-for="img in selected.images" :key="img.url + img.index">
         <img :src="imageSrc(img)" :alt="img.alt || img.type" @error="markImageError($event)" />
@@ -176,13 +523,88 @@
         </div>
       </div>
     </div>
+
     <h3>Raw text</h3>
     <div class="raw">{{ selected.raw_text || '-' }}</div>
   </section>
+
+  <div class="modal-backdrop" v-if="editVisible">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+        <h2>Edit metadata</h2>
+        <button class="btn" @click="closeEdit">Đóng</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group form-span-4">
+          <label>Tiêu đề</label>
+          <input v-model="editDraft.title" />
+        </div>
+
+        <div class="form-group">
+          <label>Ngày yyyy/mm/dd</label>
+          <input v-model="editDraft.date" placeholder="2026/07/08" />
+        </div>
+
+        <div class="form-group">
+          <label>Thời gian HH:mm:ss</label>
+          <input v-model="editDraft.time" placeholder="13:34:17" />
+        </div>
+
+        <div class="form-group">
+          <label>Kiểu</label>
+          <input v-model="editDraft.type" placeholder="M" />
+        </div>
+
+        <div class="form-group">
+          <label>Cấp rủi ro</label>
+          <input v-model="editDraft.risk_level" />
+        </div>
+
+        <div class="form-group">
+          <label>Vĩ độ (°N)</label>
+          <input v-model="editDraft.latitude" />
+        </div>
+
+        <div class="form-group">
+          <label>Kinh độ (°E)</label>
+          <input v-model="editDraft.longitude" />
+        </div>
+
+        <div class="form-group">
+          <label>Độ sâu (km)</label>
+          <input v-model="editDraft.depth_km" />
+        </div>
+
+        <div class="form-group">
+          <label>Độ lớn</label>
+          <input v-model="editDraft.magnitude" />
+        </div>
+
+        <div class="form-group form-span-4">
+          <label>Địa điểm / địa phương</label>
+          <textarea v-model="editDraft.location_text"></textarea>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-top:14px;">
+        <button class="btn btn-ok" @click="saveEdit">Save edit</button>
+        <button class="btn btn-danger" @click="removeEdit" :disabled="!editTarget || !isEdited(editTarget)">Remove edit</button>
+        <button class="btn" @click="closeEdit">Cancel</button>
+      </div>
+
+      <div class="notice">
+        Do giới hạn bảo mật của browser/GitHub Pages, trang tĩnh không thể ghi trực tiếp ngược vào file
+        <code>data/articles.jsonl</code> trên server. Sau khi edit, bấm <b>Download updated JSONL</b> rồi commit file mới lên GitHub.
+        Các edit cũng được lưu tạm trong localStorage của browser.
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
 const { createApp } = Vue;
+const EDITS_KEY = "igp-earthquake-edits-v2";
 
 createApp({
   data() {
@@ -193,16 +615,27 @@ createApp({
       error: "",
       dataUrl: "data/articles.jsonl",
       autoLoadStatus: "idle",
-      filters: { search: "", year: "", image: "", risk: "" },
-      sortKey: "published_date",
+      filters: {
+        search: "",
+        year: "",
+        locality: "",
+        image: "",
+        risk: ""
+      },
+      sortKey: "date",
       sortDir: "desc",
       page: 1,
       pageSize: 50,
-      exportType: "xlsx"
+      exportType: "xlsx",
+      edits: {},
+      editVisible: false,
+      editTarget: null,
+      editDraft: {}
     };
   },
 
   mounted() {
+    this.loadEdits();
     this.autoLoadData();
   },
 
@@ -210,67 +643,110 @@ createApp({
     normalizedArticles() {
       return this.articles.map(a => this.normalizeArticle(a));
     },
+
     years() {
       const set = new Set();
       for (const a of this.normalizedArticles) {
         const y = this.yearOf(a);
         if (y) set.add(y);
       }
-      return Array.from(set).sort((a,b)=>Number(b)-Number(a));
+      return Array.from(set).sort((a, b) => Number(b) - Number(a));
     },
+
+    localities() {
+      const set = new Set();
+      for (const a of this.normalizedArticles) {
+        const loc = this.localityOf(a);
+        if (loc) set.add(loc);
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "vi"));
+    },
+
     risks() {
       const set = new Set();
       for (const a of this.normalizedArticles) {
         const r = a.event?.risk_level;
         if (r !== null && r !== undefined && r !== "") set.add(String(r));
       }
-      return Array.from(set).sort((a,b)=>Number(a)-Number(b));
+      return Array.from(set).sort((a, b) => Number(a) - Number(b));
     },
+
     filteredArticles() {
       const q = this.filters.search.trim().toLowerCase();
+
       let rows = this.normalizedArticles.filter(a => {
         if (q) {
-          const haystack = [a.title,a.published_date,a.article_url,a.event?.location_text,a.raw_text].join(" ").toLowerCase();
+          const haystack = [
+            a.title,
+            a.published_date,
+            a.article_url,
+            a.event?.location_text,
+            this.localityOf(a),
+            a.raw_text
+          ].join(" ").toLowerCase();
+
           if (!haystack.includes(q)) return false;
         }
+
         if (this.filters.year && this.yearOf(a) !== this.filters.year) return false;
+        if (this.filters.locality && this.localityOf(a) !== this.filters.locality) return false;
+
         if (this.filters.risk !== "") {
           if (String(a.event?.risk_level) !== String(this.filters.risk)) return false;
         }
+
         if (this.filters.image) {
           const total = (a.images || []).length;
-          const hasMap = this.countImages(a,"epicenter_map") > 0;
-          const hasRecord = this.countImages(a,"seismic_record") > 0;
+          const hasMap = this.firstImage(a, "epicenter_map") !== null;
+          const hasRecord = this.firstImage(a, "seismic_record") !== null;
+
           if (this.filters.image === "epicenter_map" && !hasMap) return false;
           if (this.filters.image === "seismic_record" && !hasRecord) return false;
-          if (this.filters.image === "any" && total === 0) return false;
+          if (this.filters.image === "both" && !(hasMap && hasRecord)) return false;
           if (this.filters.image === "none" && total > 0) return false;
         }
+
         return true;
       });
-      rows.sort((a,b)=>this.compareRows(a,b));
+
+      rows.sort((a, b) => this.compareRows(a, b));
       return rows;
     },
+
     pagedArticles() {
       const start = (this.page - 1) * this.pageSize;
       return this.filteredArticles.slice(start, start + this.pageSize);
     },
+
     totalPages() {
       return Math.max(1, Math.ceil(this.filteredArticles.length / this.pageSize));
     },
+
     dateRange() {
-      const dates = this.filteredArticles.map(a=>a.published_date).filter(Boolean).sort();
+      const dates = this.filteredArticles
+        .map(a => this.bestDateTime(a).date)
+        .filter(Boolean)
+        .sort();
+
       if (!dates.length) return "-";
-      return dates[0] === dates[dates.length-1] ? dates[0] : `${dates[0]} → ${dates[dates.length-1]}`;
+      if (dates[0] === dates[dates.length - 1]) return dates[0];
+      return `${dates[0]} → ${dates[dates.length - 1]}`;
     },
+
     maxMagnitudeArticle() {
-      return this.filteredArticles.filter(a=>typeof a.event?.magnitude==="number").sort((a,b)=>b.event.magnitude-a.event.magnitude)[0] || null;
+      const rows = this.filteredArticles
+        .filter(a => typeof a.event?.magnitude === "number")
+        .sort((a, b) => b.event.magnitude - a.event.magnitude);
+
+      return rows[0] || null;
     },
+
     maxMagnitudeText() {
       return this.maxMagnitudeArticle ? this.maxMagnitudeArticle.event.magnitude : "-";
     },
+
     imageStats() {
-      const stats = { epicenter_map:0, seismic_record:0, other:0 };
+      const stats = { epicenter_map: 0, seismic_record: 0, other: 0 };
       for (const a of this.filteredArticles) {
         for (const img of (a.images || [])) {
           if (stats[img.type] === undefined) stats.other++;
@@ -278,55 +754,38 @@ createApp({
         }
       }
       return stats;
-    },
-    yearStats() {
-      const map = new Map();
-      for (const a of this.filteredArticles) {
-        const y = this.yearOf(a) || "Unknown";
-        map.set(y, (map.get(y) || 0) + 1);
-      }
-      return Array.from(map.entries()).map(([year,count])=>({year,count})).sort((a,b)=>Number(b.year)-Number(a.year));
-    },
-    riskStats() {
-      const map = new Map();
-      for (const a of this.filteredArticles) {
-        const r = a.event?.risk_level;
-        if (r === null || r === undefined || r === "") continue;
-        map.set(String(r), (map.get(String(r)) || 0) + 1);
-      }
-      return Array.from(map.entries()).map(([risk,count])=>({risk,count})).sort((a,b)=>Number(a.risk)-Number(b.risk));
-    },
-    completeness() {
-      let magnitude=0, coord=0, depth=0, eventTime=0;
-      for (const a of this.filteredArticles) {
-        if (typeof a.event?.magnitude === "number") magnitude++;
-        if (typeof a.event?.latitude === "number" && typeof a.event?.longitude === "number") coord++;
-        if (typeof a.event?.depth_km === "number") depth++;
-        if (a.event?.event_time_gmt || a.event?.event_time_hanoi) eventTime++;
-      }
-      return {magnitude,coord,depth,eventTime};
     }
   },
 
   watch: {
-    filters: { deep:true, handler(){ this.page = 1; } },
-    pageSize(){ this.page = 1; }
+    filters: {
+      deep: true,
+      handler() { this.page = 1; }
+    },
+    pageSize() { this.page = 1; }
   },
 
   methods: {
     async autoLoadData() {
       this.error = "";
       this.autoLoadStatus = "loading";
+
       try {
         const response = await fetch(this.dataUrl, { cache: "no-store" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
         const text = await response.text();
         const rows = this.parseJsonl(text);
         this.articles = rows.map(a => this.normalizeArticle(a));
+        this.applyEditsToArticles();
+
         this.selected = null;
         this.page = 1;
         this.autoLoadStatus = "loaded";
-        if (!this.articles.length) this.error = "Đã load data/articles.jsonl nhưng không có bài viết.";
+
+        if (!this.articles.length) {
+          this.error = "Đã load data/articles.jsonl nhưng không có bài viết.";
+        }
       } catch (err) {
         console.warn(err);
         this.autoLoadStatus = "failed";
@@ -338,35 +797,45 @@ createApp({
       this.error = "";
       const file = event.target.files[0];
       if (!file) return;
+
       try {
         const text = await file.text();
-        let rows = [];
-        if (file.name.toLowerCase().endsWith(".json")) {
-          const data = JSON.parse(text);
-          rows = Array.isArray(data) ? data : (data.articles || []);
-        } else {
-          rows = this.parseJsonl(text);
-        }
+        const rows = file.name.toLowerCase().endsWith(".json")
+          ? this.parseJsonArray(text)
+          : this.parseJsonl(text);
+
         this.articles = rows.map(a => this.normalizeArticle(a));
+        this.applyEditsToArticles();
+
         this.selected = null;
         this.page = 1;
         this.autoLoadStatus = "loaded";
       } catch (err) {
         console.error(err);
-        this.error = "Không đọc được file. Hãy chọn data/articles.jsonl.";
+        this.error = "Không đọc được file. Hãy chọn data/articles.jsonl hoặc JSON array export.";
       }
     },
 
+    parseJsonArray(text) {
+      const data = JSON.parse(text);
+      return Array.isArray(data) ? data : (data.articles || []);
+    },
+
     parseJsonl(text) {
-      return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line));
+      return text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => JSON.parse(line));
     },
 
     normalizeArticle(a) {
       const event = a.event || {};
-      return {
+      const normalized = {
         ...a,
         item_id: a.item_id ? String(a.item_id) : this.extractItemId(a.article_url),
         title: a.title || "",
+        type: a.type || a.event_type || "M",
         published_date: a.published_date || this.dateFromTitle(a.title || ""),
         event: {
           event_time_gmt: event.event_time_gmt || null,
@@ -381,6 +850,8 @@ createApp({
         images: Array.isArray(a.images) ? a.images : [],
         raw_text: a.raw_text || ""
       };
+
+      return normalized;
     },
 
     toNumberOrNull(v) {
@@ -388,72 +859,166 @@ createApp({
       const n = Number(String(v).replace(",", "."));
       return Number.isFinite(n) ? n : null;
     },
+
     extractItemId(url) {
       const m = String(url || "").match(/\/item\/(\d+)-/);
       return m ? m[1] : "";
     },
+
     dateFromTitle(title) {
       const m = String(title || "").match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
       if (!m) return "";
-      return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+      return `${m[3]}/${String(m[2]).padStart(2, "0")}/${String(m[1]).padStart(2, "0")}`;
     },
+
     yearOf(a) {
-      const m = String(a.published_date || "").match(/^(\d{4})/);
+      const dt = this.bestDateTime(a);
+      const m = String(dt.date || a.published_date || "").match(/^(\d{4})/);
       return m ? m[1] : "";
     },
-    countImages(a,type) {
-      return (a.images || []).filter(img => img.type === type).length;
+
+    bestDateTime(a) {
+      const event = a.event || {};
+      const raw = event.event_time_hanoi || event.event_time_gmt || a.published_date || "";
+
+      const isoMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (isoMatch) {
+        return {
+          date: `${isoMatch[1]}/${isoMatch[2]}/${isoMatch[3]}`,
+          time: `${isoMatch[4]}:${isoMatch[5]}:${isoMatch[6] || "00"}`
+        };
+      }
+
+      const slashMatch = String(raw).match(/^(\d{4})\/(\d{2})\/(\d{2})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+      if (slashMatch) {
+        return {
+          date: `${slashMatch[1]}/${slashMatch[2]}/${slashMatch[3]}`,
+          time: slashMatch[4] ? `${slashMatch[4]}:${slashMatch[5]}:${slashMatch[6] || "00"}` : ""
+        };
+      }
+
+      const dateMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (dateMatch) {
+        return {
+          date: `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}`,
+          time: ""
+        };
+      }
+
+      return { date: a.published_date || "", time: "" };
     },
-    formatNumber(v) {
-      if (v === null || v === undefined || v === "") return "-";
-      if (typeof v === "number") return Number.isInteger(v) ? String(v) : String(Math.round(v*1000)/1000);
-      return String(v);
+
+    composeHanoiTime(dateText, timeText) {
+      const date = String(dateText || "").replaceAll("/", "-");
+      const time = String(timeText || "").trim() || "00:00:00";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+      if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) return `${date}T00:00:00+07:00`;
+      return `${date}T${time.length === 5 ? time + ":00" : time}+07:00`;
     },
+
+    localityOf(a) {
+      const text = String(a.event?.location_text || "").trim();
+      if (!text) return "";
+
+      const patterns = [
+        /(tỉnh|thành phố|TP\.?|tp\.?|huyện|thị xã)\s+([^,.;()]+)/i,
+        /khu vực\s+([^,.;()]+)/i
+      ];
+
+      for (const re of patterns) {
+        const m = text.match(re);
+        if (m) {
+          return this.cleanLocality(`${m[1] || ""} ${m[2] || ""}`);
+        }
+      }
+
+      return this.cleanLocality(text.split(",")[0]);
+    },
+
+    cleanLocality(s) {
+      return String(s || "")
+        .replace(/\s+/g, " ")
+        .replace(/^khu vực\s+/i, "")
+        .trim();
+    },
+
+    firstImage(a, type) {
+      const image = (a.images || []).find(img => img.type === type);
+      return image || null;
+    },
+
     imageSrc(img) {
-      return img.url || img.local_path || "";
+      if (!img) return "";
+      const url = img.url || img.local_path || "";
+      return String(url).replace(/^http:\/\/igp-vast\.vn/i, "http://igp-vast.vn");
     },
+
     imageLabel(type) {
       if (type === "epicenter_map") return "Bản đồ chấn tâm";
       if (type === "seismic_record") return "Băng ghi";
       return "Ảnh khác";
     },
+
     markImageError(event) {
       event.target.style.display = "none";
     },
+
     googleMapUrl(a) {
       return `https://www.google.com/maps?q=${a.event.latitude},${a.event.longitude}`;
     },
-    setSort(key) {
-      if (this.sortKey === key) this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
-      else { this.sortKey = key; this.sortDir = "asc"; }
+
+    formatNumber(v) {
+      if (v === null || v === undefined || v === "") return "-";
+      if (typeof v === "number") return Number.isInteger(v) ? String(v) : String(Math.round(v * 1000) / 1000);
+      return String(v);
     },
+
+    valueOrBlank(v) {
+      if (v === null || v === undefined || v === "") return "";
+      return v;
+    },
+
+    setSort(key) {
+      if (this.sortKey === key) {
+        this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        this.sortKey = key;
+        this.sortDir = "asc";
+      }
+    },
+
     sortMark(key) {
       if (this.sortKey !== key) return "";
       return this.sortDir === "asc" ? "▲" : "▼";
     },
-    compareRows(a,b) {
-      const av = this.getSortValue(a,this.sortKey);
-      const bv = this.getSortValue(b,this.sortKey);
+
+    compareRows(a, b) {
+      const av = this.getSortValue(a, this.sortKey);
+      const bv = this.getSortValue(b, this.sortKey);
+
       let result = 0;
       if (av === null || av === undefined || av === "") result = 1;
       else if (bv === null || bv === undefined || bv === "") result = -1;
       else if (typeof av === "number" && typeof bv === "number") result = av - bv;
       else result = String(av).localeCompare(String(bv), "vi");
+
       return this.sortDir === "asc" ? result : -result;
     },
-    getSortValue(a,key) {
+
+    getSortValue(a, key) {
+      if (key === "date") return this.bestDateTime(a).date;
+      if (key === "time") return this.bestDateTime(a).time;
       if (key === "magnitude") return a.event?.magnitude;
       if (key === "depth_km") return a.event?.depth_km;
       if (key === "risk_level") return a.event?.risk_level;
+      if (key === "locality") return this.localityOf(a);
       return a[key];
     },
-    templateRows() {
-      const rows = this.filteredArticles;
 
-      return rows.map((a, index) => {
-        const event = a.event || {};
-        const imageLinks = this.templateImageLinks(a);
+    templateRows() {
+      return this.filteredArticles.map((a, index) => {
         const dt = this.bestDateTime(a);
+        const event = a.event || {};
 
         return {
           "STT": index + 1,
@@ -463,100 +1028,13 @@ createApp({
           "Kinh độ (°E)": this.valueOrBlank(event.longitude),
           "Độ sâu (km)": this.valueOrBlank(event.depth_km),
           "Độ lớn": this.valueOrBlank(event.magnitude),
-          "Kiểu": "M",
-          "Nguồn": "IGP/VAST",
-          "Link Ảnh": imageLinks,
-          "Địa điểm": event.location_text || "",
-          "Nguồn tham khảo": a.article_url || ""
+          "Kiểu": a.type || "M"
         };
       });
     },
 
-    templateImageLinks(a) {
-      const priority = {
-        "epicenter_map": 1,
-        "seismic_record": 2,
-        "other": 3
-      };
-
-      const urls = (a.images || [])
-        .slice()
-        .sort((x, y) => (priority[x.type] || 99) - (priority[y.type] || 99))
-        .map(img => img.url || img.local_path || "")
-        .filter(Boolean)
-        .map(url => String(url).trim())
-        // Avoid data:image/base64 URLs because they can exceed Excel's 32,767-char cell limit.
-        .filter(url => /^https?:\/\//i.test(url))
-        // Prefer HTTPS on GitHub Pages to avoid mixed-content blocking.
-        .map(url => url.replace(/^http:\/\/igp-vast\.vn/i, "https://igp-vast.vn"));
-
-      const uniqueUrls = Array.from(new Set(urls));
-
-      // Keep the export useful and safe. The full article link remains in "Nguồn tham khảo".
-      const joined = uniqueUrls.slice(0, 20).join(" | ");
-      return this.safeExcelText(joined);
-    },
-
-    safeExcelText(value) {
-      if (value === null || value === undefined) return "";
-
-      const text = String(value);
-
-      // Excel XLSX cell text limit is 32,767 characters.
-      // Use a smaller safety margin because SheetJS also serializes XML entities.
-      const limit = 32000;
-
-      if (text.length <= limit) return text;
-
-      return text.slice(0, limit - 80) + " ... [TRUNCATED: cell text exceeded Excel limit]";
-    },
-
-    valueOrBlank(v) {
-      if (v === null || v === undefined || v === "") return "";
-      return v;
-    },
-
-    bestDateTime(a) {
-      const event = a.event || {};
-      const raw = event.event_time_hanoi || event.event_time_gmt || a.published_date || "";
-
-      // ISO datetime: 2026-07-08T13:34:17...
-      const isoMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
-      if (isoMatch) {
-        return {
-          date: `${isoMatch[1]}/${isoMatch[2]}/${isoMatch[3]}`,
-          time: `${isoMatch[4]}:${isoMatch[5]}:${isoMatch[6] || "00"}`
-        };
-      }
-
-      // Date only: 2026-07-08
-      const dateMatch = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (dateMatch) {
-        return {
-          date: `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}`,
-          time: ""
-        };
-      }
-
-      return {
-        date: a.published_date || "",
-        time: ""
-      };
-    },
-
-    exportTemplateData() {
-      if (this.exportType === "xlsx") {
-        this.downloadTemplateExcel();
-      } else {
-        this.downloadTemplateCsv();
-      }
-    },
-
-    downloadTemplateCsv() {
-      const rows = this.templateRows();
-      if (!rows.length) return;
-
-      const headers = [
+    exportHeaders() {
+      return [
         "STT",
         "Ngày",
         "Thời gian",
@@ -564,20 +1042,32 @@ createApp({
         "Kinh độ (°E)",
         "Độ sâu (km)",
         "Độ lớn",
-        "Kiểu",
-        "Nguồn",
-        "Link Ảnh",
-        "Địa điểm",
-        "Nguồn tham khảo"
+        "Kiểu"
       ];
+    },
 
+    exportTemplateData() {
+      if (this.exportType === "xlsx") this.downloadTemplateExcel();
+      else this.downloadTemplateCsv();
+    },
+
+    csvEscape(v) {
+      const s = String(v ?? "");
+      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    },
+
+    downloadTemplateCsv() {
+      const rows = this.templateRows();
+      if (!rows.length) return;
+
+      const headers = this.exportHeaders();
       const csv = [
         headers.map(this.csvEscape).join(","),
         ...rows.map(row => headers.map(h => this.csvEscape(row[h])).join(","))
       ].join("\n");
 
-      // UTF-8 BOM helps Excel display Vietnamese text correctly.
-      this.downloadBlob("\ufeff" + csv, "igp_earthquake_template_export.csv", "text/csv;charset=utf-8");
+      this.downloadBlob("\ufeff" + csv, "igp_earthquake_export.csv", "text/csv;charset=utf-8");
     },
 
     downloadTemplateExcel() {
@@ -589,31 +1079,8 @@ createApp({
         return;
       }
 
-      const headers = [
-        "STT",
-        "Ngày",
-        "Thời gian",
-        "Vĩ độ (°N)",
-        "Kinh độ (°E)",
-        "Độ sâu (km)",
-        "Độ lớn",
-        "Kiểu",
-        "Nguồn",
-        "Link Ảnh",
-        "Địa điểm",
-        "Nguồn tham khảo"
-      ];
-
-      const safeRows = rows.map(row => {
-        const safe = {};
-        for (const key of headers) {
-          safe[key] = this.safeExcelText(row[key]);
-        }
-        return safe;
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(safeRows, { header: headers });
-
+      const headers = this.exportHeaders();
+      const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
       worksheet["!cols"] = [
         { wch: 6 },
         { wch: 14 },
@@ -622,80 +1089,359 @@ createApp({
         { wch: 12 },
         { wch: 12 },
         { wch: 10 },
-        { wch: 8 },
-        { wch: 14 },
-        { wch: 55 },
-        { wch: 45 },
-        { wch: 60 }
+        { wch: 8 }
       ];
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "EarthquakeData");
+
       try {
-        XLSX.writeFile(workbook, "igp_earthquake_template_export.xlsx");
+        XLSX.writeFile(workbook, "igp_earthquake_export.xlsx");
       } catch (err) {
         console.error(err);
-        alert("Không export được Excel. Một số ô có thể vẫn quá dài. Hãy thử chọn CSV hoặc kiểm tra trường Link Ảnh.");
+        alert("Không export được Excel. Hãy thử chọn CSV.");
       }
     },
 
-    flatRows() {
-      return this.templateRows();
+    reportRows() {
+      return this.filteredArticles.map((a, index) => {
+        const dt = this.bestDateTime(a);
+        const map = this.firstImage(a, "epicenter_map");
+        const record = this.firstImage(a, "seismic_record");
+
+        return {
+          stt: index + 1,
+          date: dt.date,
+          time: dt.time,
+          title: a.title || "",
+          latitude: this.valueOrBlank(a.event?.latitude),
+          longitude: this.valueOrBlank(a.event?.longitude),
+          depth_km: this.valueOrBlank(a.event?.depth_km),
+          magnitude: this.valueOrBlank(a.event?.magnitude),
+          type: a.type || "M",
+          locality: this.localityOf(a),
+          location_text: a.event?.location_text || "",
+          map_url: map ? this.imageSrc(map) : "",
+          record_url: record ? this.imageSrc(record) : "",
+          article_url: a.article_url || ""
+        };
+      });
     },
 
-    downloadCsv() {
-      this.downloadTemplateCsv();
-    },
-
-    downloadJson() {
-      this.downloadBlob(JSON.stringify(this.filteredArticles,null,2), "igp_earthquake_report.json", "application/json;charset=utf-8");
-    },
     downloadReportHtml() {
-      const rows = this.filteredArticles;
+      const rows = this.reportRows();
       const generatedAt = new Date().toLocaleString("vi-VN");
-      const tableRows = rows.map(a => `
-        <tr>
-          <td>${this.escapeHtml(a.published_date || "")}</td>
-          <td><a href="${this.escapeAttr(a.article_url || "")}" target="_blank">${this.escapeHtml(a.title || "")}</a><div class="small">ID: ${this.escapeHtml(a.item_id || "")}</div></td>
-          <td>${this.escapeHtml(this.formatNumber(a.event?.magnitude))}</td>
-          <td>${this.escapeHtml(this.formatNumber(a.event?.latitude))}, ${this.escapeHtml(this.formatNumber(a.event?.longitude))}</td>
-          <td>${this.escapeHtml(this.formatNumber(a.event?.depth_km))} km</td>
-          <td>${this.escapeHtml(a.event?.location_text || "")}</td>
-          <td>${this.escapeHtml(this.formatNumber(a.event?.risk_level))}</td>
-          <td>Map: ${this.countImages(a,"epicenter_map")} / Record: ${this.countImages(a,"seismic_record")}</td>
-        </tr>`).join("");
-      const topImages = rows.flatMap(a => (a.images || []).filter(img => img.type==="epicenter_map" || img.type==="seismic_record").slice(0,2).map(img=>({article:a,img}))).slice(0,24);
-      const imageHtml = topImages.map(({article,img}) => `
-        <div class="img-card"><img src="${this.escapeAttr(this.imageSrc(img))}" alt="${this.escapeAttr(img.alt || img.type || "")}"><div><b>${this.escapeHtml(this.imageLabel(img.type))}</b></div><div class="small">${this.escapeHtml(article.title || "")}</div></div>`).join("");
-      const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>IGP/VAST Earthquake Extracted Report</title>
-<style>body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111827}.small{font-size:12px;color:#6b7280}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#f9fafb}.value{font-size:24px;font-weight:800}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}th{background:#f3f4f6}.images{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}.img-card{border:1px solid #e5e7eb;border-radius:10px;padding:8px}.img-card img{width:100%;height:180px;object-fit:contain;background:#f3f4f6}</style></head><body>
-<h1>IGP/VAST Earthquake Extracted Report</h1><div class="small">Generated at: ${this.escapeHtml(generatedAt)}</div>
-<div class="stats"><div class="card"><div>Total articles</div><div class="value">${rows.length}</div></div><div class="card"><div>Date range</div><div class="value" style="font-size:18px">${this.escapeHtml(this.dateRange)}</div></div><div class="card"><div>Max magnitude</div><div class="value">${this.escapeHtml(this.maxMagnitudeText)}</div></div><div class="card"><div>Images</div><div class="value">${this.imageStats.epicenter_map}/${this.imageStats.seismic_record}</div><div class="small">Map / Record</div></div></div>
-<h2>Important Images</h2><div class="images">${imageHtml}</div>
-<h2>Metadata Table</h2><table><thead><tr><th>Date</th><th>Title</th><th>M</th><th>Coordinate</th><th>Depth</th><th>Location</th><th>Risk</th><th>Images</th></tr></thead><tbody>${tableRows}</tbody></table>
-</body></html>`;
-      this.downloadBlob(html, "igp_earthquake_report.html", "text/html;charset=utf-8");
+      const dataJson = JSON.stringify(rows).replace(/</g, "\\u003c");
+
+      const reportHtml = `<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IGP/VAST Earthquake Metadata Report</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#111827;background:#f5f7fb}
+h1{margin:0 0 6px}.small{font-size:12px;color:#6b7280;line-height:1.45}
+.card{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 6px 20px rgba(15,23,42,.05)}
+.toolbar{display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr;gap:10px;margin-top:12px}
+input,select{border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+.value{font-size:24px;font-weight:800}
+.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:white;max-height:75vh}
+table{border-collapse:collapse;width:100%;min-width:1280px;font-size:13px}
+th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#f3f4f6;cursor:pointer;z-index:2}
+.thumb{width:150px;height:100px;object-fit:contain;border:1px solid #e5e7eb;border-radius:8px;background:#f3f4f6}
+a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+@media print{body{background:white;margin:0}.toolbar{display:none}.card{box-shadow:none}.table-wrap{max-height:none;overflow:visible}th{position:static}.thumb{width:130px;height:86px}}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>IGP/VAST Earthquake Metadata Report</h1>
+<div class="small">Generated at: ${this.escapeHtml(generatedAt)}. Report này đã bỏ phần Important Images; ảnh được chèn trực tiếp trong Metadata Table.</div>
+<div class="toolbar">
+<input id="search" placeholder="Search tiêu đề, địa phương, địa điểm...">
+<select id="year"><option value="">Tất cả năm</option></select>
+<select id="locality"><option value="">Tất cả địa phương</option></select>
+<select id="image"><option value="">Tất cả ảnh</option><option value="map">Có bản đồ chấn tâm</option><option value="record">Có băng ghi</option><option value="both">Có cả 2</option><option value="none">Không có ảnh</option></select>
+</div>
+</div>
+
+<div class="stats">
+<div class="card"><div>Total rows</div><div class="value" id="statTotal">0</div></div>
+<div class="card"><div>Date range</div><div class="value" id="statDate" style="font-size:18px">-</div></div>
+<div class="card"><div>Max magnitude</div><div class="value" id="statMag">-</div></div>
+<div class="card"><div>Images</div><div class="value" id="statImg">0 / 0</div><div class="small">Map / Record</div></div>
+</div>
+
+<div class="card">
+<h2>Metadata Table</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th data-key="stt">STT</th>
+<th data-key="date">Ngày</th>
+<th data-key="time">Thời gian</th>
+<th data-key="title">Tiêu đề</th>
+<th data-key="latitude">Vĩ độ (°N)</th>
+<th data-key="longitude">Kinh độ (°E)</th>
+<th data-key="depth_km">Độ sâu (km)</th>
+<th data-key="magnitude">Độ lớn</th>
+<th data-key="type">Kiểu</th>
+<th data-key="locality">Địa phương</th>
+<th>Bản đồ chấn tâm</th>
+<th>Băng ghi</th>
+<th>Nguồn tham khảo</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
+<script>
+const DATA = ${dataJson};
+let sortKey = "date";
+let sortDir = "desc";
+let rows = DATA.slice();
+
+const el = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]));
+const img = url => url ? '<a href="'+esc(url)+'" target="_blank"><img class="thumb" src="'+esc(url)+'" onerror="this.style.display=\\'none\\'"></a>' : '<span class="small">Không có</span>';
+
+function unique(arr){ return Array.from(new Set(arr.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b),"vi")); }
+function yearOf(r){ const m = String(r.date || "").match(/^(\\d{4})/); return m ? m[1] : ""; }
+
+function initFilters(){
+  for(const y of unique(DATA.map(yearOf))) el("year").insertAdjacentHTML("beforeend", '<option value="'+esc(y)+'">'+esc(y)+'</option>');
+  for(const l of unique(DATA.map(r => r.locality))) el("locality").insertAdjacentHTML("beforeend", '<option value="'+esc(l)+'">'+esc(l)+'</option>');
+}
+
+function applyFilters(){
+  const q = el("search").value.trim().toLowerCase();
+  const y = el("year").value;
+  const loc = el("locality").value;
+  const im = el("image").value;
+
+  rows = DATA.filter(r => {
+    if(q && ![r.title,r.locality,r.location_text,r.article_url].join(" ").toLowerCase().includes(q)) return false;
+    if(y && yearOf(r) !== y) return false;
+    if(loc && r.locality !== loc) return false;
+    if(im === "map" && !r.map_url) return false;
+    if(im === "record" && !r.record_url) return false;
+    if(im === "both" && !(r.map_url && r.record_url)) return false;
+    if(im === "none" && (r.map_url || r.record_url)) return false;
+    return true;
+  });
+
+  rows.sort(compare);
+  render();
+}
+
+function compare(a,b){
+  const av = a[sortKey], bv = b[sortKey];
+  let res = 0;
+  if(av === null || av === undefined || av === "") res = 1;
+  else if(bv === null || bv === undefined || bv === "") res = -1;
+  else if(typeof av === "number" && typeof bv === "number") res = av - bv;
+  else res = String(av).localeCompare(String(bv),"vi");
+  return sortDir === "asc" ? res : -res;
+}
+
+function render(){
+  const body = rows.map(r => '<tr>'+
+    '<td>'+esc(r.stt)+'</td>'+
+    '<td><b>'+esc(r.date)+'</b></td>'+
+    '<td>'+esc(r.time)+'</td>'+
+    '<td>'+esc(r.title)+'</td>'+
+    '<td>'+esc(r.latitude)+'</td>'+
+    '<td>'+esc(r.longitude)+'</td>'+
+    '<td>'+esc(r.depth_km)+'</td>'+
+    '<td>'+esc(r.magnitude)+'</td>'+
+    '<td>'+esc(r.type)+'</td>'+
+    '<td><b>'+esc(r.locality)+'</b><div class="small">'+esc(r.location_text)+'</div></td>'+
+    '<td>'+img(r.map_url)+'</td>'+
+    '<td>'+img(r.record_url)+'</td>'+
+    '<td><a href="'+esc(r.article_url)+'" target="_blank">Bài gốc</a></td>'+
+  '</tr>').join("");
+
+  el("tbody").innerHTML = body;
+  el("statTotal").textContent = rows.length;
+
+  const dates = rows.map(r=>r.date).filter(Boolean).sort();
+  el("statDate").textContent = dates.length ? (dates[0] === dates[dates.length-1] ? dates[0] : dates[0] + " → " + dates[dates.length-1]) : "-";
+
+  const mags = rows.map(r => Number(r.magnitude)).filter(Number.isFinite).sort((a,b)=>b-a);
+  el("statMag").textContent = mags.length ? mags[0] : "-";
+
+  const maps = rows.filter(r => r.map_url).length;
+  const records = rows.filter(r => r.record_url).length;
+  el("statImg").textContent = maps + " / " + records;
+}
+
+document.querySelectorAll("th[data-key]").forEach(th => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.key;
+    if(sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+    else { sortKey = key; sortDir = "asc"; }
+    applyFilters();
+  });
+});
+
+["search","year","locality","image"].forEach(id => el(id).addEventListener("input", applyFilters));
+initFilters();
+applyFilters();
+<\/script>
+</body>
+</html>`;
+
+      this.downloadBlob(reportHtml, "igp_earthquake_metadata_report.html", "text/html;charset=utf-8");
     },
+
+    downloadUpdatedJson() {
+      const lines = this.normalizedArticles.map(a => JSON.stringify(a));
+      this.downloadBlob(lines.join("\n") + "\n", "articles.updated.jsonl", "application/jsonl;charset=utf-8");
+    },
+
     downloadBlob(content, filename, type) {
-      const blob = new Blob([content], {type});
+      const blob = new Blob([content], { type });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
       URL.revokeObjectURL(url);
     },
+
     escapeHtml(s) {
-      return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     },
-    escapeAttr(s) {
-      return this.escapeHtml(s).replace(/"/g,"&quot;");
+
+    loadEdits() {
+      try {
+        this.edits = JSON.parse(localStorage.getItem(EDITS_KEY) || "{}");
+      } catch {
+        this.edits = {};
+      }
     },
-    resetAll() {
-      this.articles = [];
-      this.selected = null;
-      this.error = "";
-      this.filters = { search:"", year:"", image:"", risk:"" };
-      this.page = 1;
-      this.autoLoadStatus = "idle";
+
+    saveEdits() {
+      localStorage.setItem(EDITS_KEY, JSON.stringify(this.edits));
+    },
+
+    articleKey(a) {
+      return String(a.item_id || a.article_url || "");
+    },
+
+    isEdited(a) {
+      return !!this.edits[this.articleKey(a)];
+    },
+
+    applyEditsToArticles() {
+      this.articles = this.articles.map(a => {
+        const key = this.articleKey(a);
+        const edit = this.edits[key];
+        if (!edit) return a;
+        return this.mergeArticleEdit(a, edit);
+      });
+    },
+
+    mergeArticleEdit(article, edit) {
+      const merged = JSON.parse(JSON.stringify(article));
+      merged.title = edit.title ?? merged.title;
+      merged.type = edit.type ?? merged.type ?? "M";
+      merged.event = merged.event || {};
+      merged.event.event_time_hanoi = edit.event_time_hanoi ?? merged.event.event_time_hanoi;
+      merged.event.latitude = this.toNumberOrNull(edit.latitude);
+      merged.event.longitude = this.toNumberOrNull(edit.longitude);
+      merged.event.depth_km = this.toNumberOrNull(edit.depth_km);
+      merged.event.magnitude = this.toNumberOrNull(edit.magnitude);
+      merged.event.risk_level = this.toNumberOrNull(edit.risk_level);
+      merged.event.location_text = edit.location_text ?? merged.event.location_text;
+      return merged;
+    },
+
+    openEdit(a) {
+      const dt = this.bestDateTime(a);
+
+      this.editTarget = a;
+      this.editDraft = {
+        title: a.title || "",
+        date: dt.date || "",
+        time: dt.time || "",
+        type: a.type || "M",
+        latitude: this.valueOrBlank(a.event?.latitude),
+        longitude: this.valueOrBlank(a.event?.longitude),
+        depth_km: this.valueOrBlank(a.event?.depth_km),
+        magnitude: this.valueOrBlank(a.event?.magnitude),
+        risk_level: this.valueOrBlank(a.event?.risk_level),
+        location_text: a.event?.location_text || ""
+      };
+      this.editVisible = true;
+    },
+
+    closeEdit() {
+      this.editVisible = false;
+      this.editTarget = null;
+      this.editDraft = {};
+    },
+
+    saveEdit() {
+      if (!this.editTarget) return;
+
+      const key = this.articleKey(this.editTarget);
+      const event_time_hanoi = this.composeHanoiTime(this.editDraft.date, this.editDraft.time);
+
+      const edit = {
+        title: this.editDraft.title,
+        type: this.editDraft.type || "M",
+        event_time_hanoi,
+        latitude: this.editDraft.latitude,
+        longitude: this.editDraft.longitude,
+        depth_km: this.editDraft.depth_km,
+        magnitude: this.editDraft.magnitude,
+        risk_level: this.editDraft.risk_level,
+        location_text: this.editDraft.location_text
+      };
+
+      this.edits[key] = edit;
+      this.saveEdits();
+
+      const idx = this.articles.findIndex(a => this.articleKey(a) === key);
+      if (idx >= 0) {
+        this.articles[idx] = this.mergeArticleEdit(this.articles[idx], edit);
+      }
+
+      if (this.selected && this.articleKey(this.selected) === key) {
+        this.selected = this.mergeArticleEdit(this.selected, edit);
+      }
+
+      this.closeEdit();
+    },
+
+    removeEdit() {
+      if (!this.editTarget) return;
+      const key = this.articleKey(this.editTarget);
+      delete this.edits[key];
+      this.saveEdits();
+      this.closeEdit();
+      this.autoLoadData();
+    },
+
+    clearEdits() {
+      if (!confirm("Xóa toàn bộ edit local trong browser?")) return;
+      this.edits = {};
+      localStorage.removeItem(EDITS_KEY);
+      this.autoLoadData();
     }
   }
 }).mount("#app");
